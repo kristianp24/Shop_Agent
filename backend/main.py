@@ -1,6 +1,6 @@
 from agent import ShopAgent
 from runtime_context import RuntimeContex
-question = "Sa Kukulla kemi ne dyqan?"
+question = "Per produktin Kukulla modifiko sasine me 10."
 agent = ShopAgent()
 
 for step in agent._agent.stream(

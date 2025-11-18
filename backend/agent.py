@@ -6,19 +6,17 @@ from system_prompt import  SYSTEM_PROMPT
 import os
 from dotenv import load_dotenv
 from supabase.client import Client, create_client
-from tools import query_table
+from tools import query_table, query_all_names, update_quantity
 # load_dotenv()
 check_env_variables()
 class ShopAgent:
     def __init__(self):
         self._llm = ChatGoogleGenerativeAI(model = "gemini-2.5-flash")
         self.client = self.create_supabase_client()
-        print("HEREE-------", self.client.supabase_url)
-        print("HEREE-------", self.client.supabase_key)
-
+       
         self._agent = create_agent(
             model = self._llm,
-            tools=[query_table],
+            tools=[query_table, query_all_names, update_quantity],
             system_prompt= SYSTEM_PROMPT,
             context_schema=RuntimeContex
         )

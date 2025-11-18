@@ -2,3 +2,4 @@
 /backend/example.env
 /backend/back-venv
 /backend/__pycache__
+/backend/langGraph
