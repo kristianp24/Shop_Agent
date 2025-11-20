@@ -82,13 +82,14 @@ if prompt := st.chat_input("Ask about products, stock, or sales..."):
            
             if "messages" in event and len(event["messages"]) > 0:
                 last_message = event["messages"][-1]
-                
-                # We only care about the AI's final response, not the tool calls
-                # (LangChain messages have a 'type' attribute)
-                if last_message.type == "ai":
-                    full_response = last_message.content
-                    # Update the UI dynamically if you want (optional)
-            # message_placeholder.markdown(full_response + "▌")
+                raw_content = last_message.content
+                if isinstance(raw_content, list):
+                    # Extract only the 'text' values from the list items
+                    full_response = "".join(
+                        [block["text"] for block in raw_content if isinstance(block, dict) and "text" in block]
+                    )
+                else:
+                    full_response = raw_content
         
         # Final display
         message_placeholder.markdown(full_response)
