@@ -1,6 +1,14 @@
 # Shop Agent
 
-> AI-powered inventory copilot that lets you ask natural-language questions and run safe CRUD operations on your shop database.
+> AI-powered inventory copilot that lets you ask natural-language questions and run safe CRUD operations on your shop database. This app is developed and deployed in order to help my family
+manage better the products on their store.
+
+## Tech Stack
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![LangChain](https://img.shields.io/badge/LangChain-1.x-2B5B84?logo=chainlink&logoColor=white)
+![LangGraph](https://img.shields.io/badge/LangGraph-1.x-FF6F3C?logo=graphql&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-2.x-3ECF8E?logo=supabase&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.51+-FF4B4B?logo=streamlit&logoColor=white)
 
 ## Highlights
 - Conversational agent built with LangGraph + LangChain, powered by Google Gemini 2.5 Flash.
@@ -92,15 +100,3 @@ The sidebar reset button clears conversation state and spins up a fresh LangGrap
 
 The `system_prompt` forces the agent to choose the correct tool workflow (e.g., read → update, read → delete) and never issue raw SQL.
 
-## Development Tips
-- Use the CLI loop when adjusting prompts/tools; faster than restarting Streamlit.
-- Keep Supabase schemas in sync with the tool signatures—mismatched column names will surface as runtime tool errors.
-- `RuntimeContex` is the single injection point for shared resources. Extend it if you add caches, feature flags, or analytics clients.
-- PR checklist: run Streamlit locally, issue at least one read + write command, and confirm Supabase rows change as expected.
-
-## Troubleshooting
-- **`Unauthorized` from Supabase**: confirm `PROJECT_API` is a service-role key if you plan to write data from a local dev machine.
-- **Tool returns “An error occurred …”**: replicate in CLI mode; LangGraph logs the raw exception for easier debugging.
-- **Gemini quota hits**: switch to a cheaper model or add caching on the UI side before retrying.
-
-Enjoy building with Shop Agent! If you extend it (multiple tables, analytics dashboards, etc.), keep the README updated so future contributors know the workflow.
