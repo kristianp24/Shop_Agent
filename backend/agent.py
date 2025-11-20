@@ -6,7 +6,8 @@ from system_prompt import  SYSTEM_PROMPT
 import os
 from dotenv import load_dotenv
 from supabase.client import Client, create_client
-from tools import query_table, query_all_names, update_quantity
+from langgraph.checkpoint.memory import InMemorySaver
+from tools import query_table, query_all_names, update_quantity, delete_record, insert_record, get_total_stock_value, get_general_information
 # load_dotenv()
 check_env_variables()
 class ShopAgent:
@@ -16,9 +17,10 @@ class ShopAgent:
        
         self._agent = create_agent(
             model = self._llm,
-            tools=[query_table, query_all_names, update_quantity],
+            tools=[query_table, query_all_names, update_quantity, delete_record, insert_record, delete_record, get_total_stock_value, get_general_information],
             system_prompt= SYSTEM_PROMPT,
-            context_schema=RuntimeContex
+            context_schema=RuntimeContex,
+            checkpointer= InMemorySaver()
         )
     
     def create_supabase_client(self):

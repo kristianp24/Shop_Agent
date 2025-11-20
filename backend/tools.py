@@ -14,7 +14,7 @@ def query_table(product_name: str):
     try:
         runtime_config = get_runtime(RuntimeContex)  
         supabase_client = runtime_config.context.db
-        response = supabase_client.table("products").select("quantity").eq('product_name', product_name).execute()
+        response = supabase_client.table("products").select("quantity").ilike('product_name', product_name).execute()
         if response.data and len(response.data) > 0:
             quantity = response.data[0]['quantity']
             return f"Current stock for '{product_name}' is {quantity} units."
@@ -56,6 +56,79 @@ def update_quantity(product_name : str, previous_quantity : int, quantity_to_be_
             "date_updated": datetime.datetime.now().isoformat()
         }
         response = supabase_client.table("products").update(data_to_be_updated).eq("product_name", product_name).execute()
+        return response.data
+    except Exception as e:
+        return f"An error occured {e}"
+
+@tool("delete_record", description= "Deletes the record for the given product name")
+def delete_record(product_name : str):
+    """
+        This function is responsible for performing a delete opeation on the database for the product_name given.
+        Args:
+            product_name: str -> The name of the product to be deleted.
+    """
+    try:
+        runtimeconfig = get_runtime(RuntimeContex)
+        supabase_client = runtimeconfig.context.db
+        response = supabase_client.table("products").delete().eq("product_name", product_name).execute()
+        return response.count
+    except Exception as e:
+        return f"Error on deleting the record {e}"
+    
+@tool("insert_product", description= "This method is responsabile for inserting a new row in the table")
+def insert_record(product_name: str, quantity: int, price: float, product_code: str = "NA"):
+    """
+        This tool is responsabile for adding new rows to the table of products
+        Args:
+            product_name: str -> The name of the product to be added
+            quantity: int -> The quantity of the product
+            price: float -> The price for 1 piece
+            product_code: str = "NA" -> In case the user does not provide this then this function will generate a random code
+    """
+    try:
+        runtime_config = get_runtime(RuntimeContex)
+        supabase_client = runtime_config.context.db
+        if product_code == "NA":
+            product_code = product_name + "123G"
+        
+        values_to_insert = {
+            "product_code": product_code,
+            "product_name": product_name,
+            "quantity": quantity,
+            "price_per_piece": price
+        }
+        
+        response = supabase_client.table("products").insert(values_to_insert).execute()
+        return response.count
+    except Exception as e:
+        return f"An error occured in insertion {e}"
+    
+@tool("stock_value", description="This tool calculates how much stock is in the shop in terms of money.")
+def get_total_stock_value():
+    """
+        Calculates the total value of all the products (price * quantity)
+    """
+    try:
+        runtime_config = get_runtime(RuntimeContex)
+        supabase_client = runtime_config.context.db
+
+        response = supabase_client.rpc("get_total_inventory_value").execute()
+        return response.data if response.data else -1
+    except Exception as e:
+        return f"An error occured during geting the total stock value {e}"
+    
+@tool("general_information", description="This tool is for selecting all columns for a certain product")
+def get_general_information(product_name: str):
+    """
+        This functions queries all the columns for a certain product name.
+        Args:
+            product_name: str
+    """
+    try:
+        runtime_config = get_runtime(RuntimeContex)
+        supabase_client = runtime_config.context.db
+
+        response = supabase_client.table("products").select("*").ilike("product_name", product_name).execute()
         return response.data
     except Exception as e:
         return f"An error occured {e}"
