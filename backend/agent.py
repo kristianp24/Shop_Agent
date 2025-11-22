@@ -8,11 +8,11 @@ from langgraph.prebuilt import ToolNode
 from supabase.client import Client, create_client
 from langgraph.checkpoint.memory import InMemorySaver
 from state import AgentState
-from tools import query_table, query_all_names, update_quantity, delete_record, insert_record, get_total_stock_value, get_general_information
+from tools import query_table, query_all_names, update_quantity, delete_record, insert_record, get_total_stock_value, get_general_information, get_most_valuable_product, get_less_products, get_top_products
 check_env_variables()
 class ShopAgent:
     def __init__(self):
-        self.tools = [query_table, query_all_names, update_quantity, insert_record, delete_record, get_total_stock_value, get_general_information]
+        self.tools = [query_table, query_all_names, update_quantity, insert_record, delete_record, get_total_stock_value, get_general_information, get_less_products, get_most_valuable_product, get_top_products]
         self._llm = ChatGoogleGenerativeAI(model = "gemini-2.5-flash").bind_tools(self.tools)
         self.client = self.create_supabase_client()
        
@@ -80,7 +80,7 @@ class ShopAgent:
 
         workflow.add_node("selection_node", self.selection_node)
         workflow.add_node("model", self.call_model)
-        workflow.add_node("tools", ToolNode([query_all_names, update_quantity, insert_record, delete_record, get_total_stock_value, get_general_information]))
+        workflow.add_node("tools", ToolNode(self.tools))
 
         workflow.set_entry_point("model")
 
