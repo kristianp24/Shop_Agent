@@ -12,7 +12,7 @@ from tools import query_table, query_all_names, update_quantity, delete_record, 
 check_env_variables()
 class ShopAgent:
     def __init__(self):
-        self.tools = [query_table, query_all_names, update_quantity, insert_record, delete_record, get_total_stock_value, get_general_information, get_less_products, get_most_valuable_product, get_top_products]
+        self.tools = [query_table, query_all_names, update_quantity, insert_record, delete_record, get_total_stock_value, get_general_information, get_less_products, get_top_products]
         self._llm = ChatGoogleGenerativeAI(model = "gemini-2.5-flash").bind_tools(self.tools)
         self.client = self.create_supabase_client()
        
