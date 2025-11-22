@@ -132,3 +132,23 @@ def get_general_information(product_name: str):
         return response.data
     except Exception as e:
         return f"An error occured {e}"
+
+@tool("most_valuable_product", description="This tool is used to obtain the product with the biggest value")
+def get_most_valuable_product():
+    try:
+        runtime_config = get_runtime(RuntimeContex)
+        supabase = runtime_config.context.db
+        response = supabase.rpc("get_product_max_values")
+        return response.data
+    except Exception as e:
+        return f"An error occured {e}"
+
+@tool("top_10_products", description="This tool is used to select the top 10 products with by their values(price*quantity)")
+def get_top_10_products():
+    try:
+        runtime_config = get_runtime(RuntimeContex)
+        supabase = runtime_config.context.db
+        response = supabase.rpc("get_top_10_most_valuable_products")
+        return response.data
+    except Exception as e:
+        return f"An error occured {e}"
