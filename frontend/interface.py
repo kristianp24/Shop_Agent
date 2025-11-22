@@ -2,6 +2,7 @@ import streamlit as st
 import sys
 import os
 import uuid
+from langchain_core.messages import HumanMessage
 
 # --- PATH SETUP START ---
 # Get the absolute path of the 'frontend' directory
@@ -71,7 +72,7 @@ if prompt := st.chat_input("Ask about products, stock, or sales..."):
         full_response = ""
         
         events = agent._agent.stream(
-            {"messages": prompt},
+            {"messages":[HumanMessage(prompt)]},
             {"configurable": {"thread_id": st.session_state.thread_id}},
             stream_mode="values",
             context=RuntimeContex(db=agent.client)
