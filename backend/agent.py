@@ -7,6 +7,8 @@ from langchain_core.messages import ToolMessage, SystemMessage
 from langgraph.prebuilt import ToolNode
 from supabase.client import Client, create_client
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.types import Command
+from typing import Literal
 from state import AgentState
 from tools import query_table, query_all_names, update_quantity, delete_record, insert_record, get_total_stock_value, get_general_information, get_most_valuable_product, get_less_products, get_top_products
 check_env_variables()
@@ -24,28 +26,27 @@ class ShopAgent:
         client: Client = create_client(url, key)
         return client
     
-    def call_model(self, state: AgentState):
-        
+    def call_model(self, state: AgentState) -> Command[Literal["selection_node", "tools", "__end__"]]:
         messages = state["messages"]
         system_message = SystemMessage(SYSTEM_PROMPT)
         
         response = self._llm.invoke([system_message] + messages)
+        goto = ""
         
-        # We return the new message to add it to the history
-        return {"messages": [response]}
-    
-    def router(self, state: AgentState):
-        last_message = state['messages'][-1]
-
-        if not last_message.tool_calls:
-            return "__end__"
-        
-        tool_name = last_message.tool_calls[0]['name']
-        if tool_name == "query_table":
-            return "selection_node"
+        if not response.tool_calls:
+            goto = "__end__"
+        elif response.tool_calls[0]['name'] == "query_table":
+            goto = "selection_node"
         else:
-            return "tools"
+            goto = "tools"
+        
+        
+        return Command(
+            update= AgentState(messages=[response]),
+            goto = [goto]
+        )
     
+
     def selection_node(self, state: AgentState):
     
         # get the last message the user put
@@ -79,23 +80,13 @@ class ShopAgent:
         workflow = StateGraph(AgentState)
 
         workflow.add_node("selection_node", self.selection_node)
-        workflow.add_node("model", self.call_model)
+        workflow.add_node("intent classifier", self.call_model)
         workflow.add_node("tools", ToolNode(self.tools))
 
-        workflow.set_entry_point("model")
+        workflow.set_entry_point("intent classifier")
 
-        workflow.add_conditional_edges(
-            "model",
-            self.router,
-            {
-                "selection_node": "selection_node",
-                "tools": "tools",
-                "__end__": "__end__"
-            }
-        )
-
-        workflow.add_edge("selection_node", "model")
-        workflow.add_edge("tools", "model")
+        workflow.add_edge("selection_node", "intent classifier")
+        workflow.add_edge("tools", "intent classifier")
 
         return workflow.compile(checkpointer=InMemorySaver())
  

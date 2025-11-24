@@ -143,7 +143,7 @@ def get_most_valuable_product():
     except Exception as e:
         return f"An error occured {e}"
 
-@tool("top_10_products", description="This tool is used to select the top products with by their values(price*quantity)")
+@tool("top_products", description="This tool is used to select the top products with by their values(price*quantity)")
 def get_top_products(nr_products: int = 5):
     """
         Returns the top {nr_products} with the biggest value.
@@ -158,7 +158,7 @@ def get_top_products(nr_products: int = 5):
     except Exception as e:
         return f"An error occured {e}"
 
-@tool("less_10_products", description="This tool is used to select the less 10 products with by their values(price*quantity)")
+@tool("less_products", description="This tool is used to select the less 10 products with by their values(price*quantity)")
 def get_less_products(nr_products: int = 5):
     """
         Returns the less {nr_products} with the lowest values.
@@ -168,7 +168,7 @@ def get_less_products(nr_products: int = 5):
     try:
         runtime_config = get_runtime(RuntimeContex)
         supabase = runtime_config.context.db
-        response = supabase.rpc("get_less_valuable_products", {"limit_count": nr_products}).execute()
+        response = supabase.rpc("get_product_values", {"limit_count": nr_products}).execute()
         return response.data
     except Exception as e:
         return f"An error occured {e}"
