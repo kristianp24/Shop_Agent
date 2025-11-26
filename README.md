@@ -27,6 +27,11 @@ manage better the products on their store.
 User → Streamlit/CLI → ShopAgent (LangGraph) → Tools ↔ Supabase
 ```
 
+## Graph Representation
+Visual overview of the LangGraph workflow used by `ShopAgent`.
+
+![LangGraph representation](backend/graph_representation/graph_output.png)
+
 ## Project Tour
 ```
 Shop_Agent/
@@ -99,4 +104,3 @@ The sidebar reset button clears conversation state and spins up a fresh LangGrap
 | `general_information` | Returns every column for a product, useful for audits. |
 
 The `system_prompt` forces the agent to choose the correct tool workflow (e.g., read → update, read → delete) and never issue raw SQL.
-
