@@ -9,7 +9,16 @@ print("Agent Initialized!")
 with open("graph_output.png", "wb") as f:
     f.write(shop_agent._agent.get_graph().draw_mermaid_png())
 
-user_input = "Give me information about the products i have in the shop"
+
+user_input = """
+    Costumer 1 20-05-2025
+    Dolls 5 200 2500
+    Cars 3 150 
+    Books 10 50 500
+    Toys 2 300 
+    Books2 4 80 
+    Socks 100 150.5
+"""
 inputs = {"messages": [HumanMessage(content=user_input)]}
 
 
