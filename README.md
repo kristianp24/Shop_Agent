@@ -21,11 +21,8 @@ manage better the products on their store.
 1. The Streamlit app (`frontend/interface.py`) or CLI (`backend/main.py`) collects a user prompt.
 2. `ShopAgent` wires a Gemini chat model, tool definitions (`backend/tools.py`), and LangGraph checkpointing to keep track of context.
 3. A `RuntimeContex` object injects the active Supabase client into LangGraph’s runtime so tools can talk to the database without global state.
-4. Tool outputs stream back through LangGraph; only final AI responses get rendered to the UI/chat loop.
-
-```
-User → Streamlit/CLI → ShopAgent (LangGraph) → Tools ↔ Supabase
-```
+4. Tool outputs stream back through LangGraph; only final AI responses get rendered to the UI/chat loop in case of a database operation
+5. The agent can also send a bill with the products the costumer bough directly to his whatsapp number.
 
 ## Graph Representation
 Visual overview of the LangGraph workflow used by `ShopAgent`.
@@ -42,7 +39,9 @@ Shop_Agent/
 │   ├── system_prompt.py      # Operating instructions for the agent
 │   ├── env_checker.py        # Loads .env and validates required keys
 │   ├── runtime_context.py    # Dataclass injected into LangGraph runtime
-│ 
+│   ├── whatsapp_sender.py    # Responsible class for sending the bill to costumer's whatsapp
+|   ├── bill_model.py         # The class which defines the data structure of a bill
+|   ├── bill_pdf_creator.py   # The class responsible for converting the bill data structure into a good looking PDF.
 ├── frontend/
 │   └── interface.py          # Streamlit chat UI with session/thread state
 └── .gitignore
