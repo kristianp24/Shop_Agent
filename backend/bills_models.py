@@ -8,7 +8,7 @@ class BillItem(BaseModel):
     total_price: float = Field(..., description="Total price for the quantity of the product")
 
 class Bill(BaseModel):
-    date: str = Field(..., description="Date of the bill in DD-MM-YYYY format")
+    date: Optional[str] = Field(None, description="Date of the bill in DD-MM-YYYY format")
     customer_name: Optional[str] = Field(None, description="Name of the customer")
     items: List[BillItem] = Field(..., description="List of items in the bill")
     total_amount: float = Field(..., description="Total amount for the bill")

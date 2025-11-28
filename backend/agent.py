@@ -122,7 +122,12 @@ class ShopAgent:
         pdf.seek(0)
 
         whatsapp_sender = WhatsappSender()
-        send_result = whatsapp_sender.send_bill("invoice.pdf", pdf, datetime.now().strftime("%d-%m-%Y"))
+        send_result, status = whatsapp_sender.send_bill("invoice.pdf", pdf, datetime.now().strftime("%d-%m-%Y"))
+        if status == -1:
+            send_result = f"{send_result}. Saving it into local file 'failed_invoice.pdf'."
+            with open("failed_invoice.pdf", "w") as f:
+                f.write(pdf.read())
+        
         return {
             "messages": [
                 ToolMessage( 
