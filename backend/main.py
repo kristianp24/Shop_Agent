@@ -11,13 +11,10 @@ with open("graph_output.png", "wb") as f:
 
 
 user_input = """
-    Costumer 1 20-05-2025
-    Dolls 5 200 2500
-    Cars 3 150 
-    Books 10 50 500
-    Toys 2 300 
-    Books2 4 80 
-    Socks 100 150.5
+    Kristian 20-05-2025
+    Kukulla 5 200 2500
+    topa 3 150 
+    lule 10 50 500
 """
 inputs = {"messages": [HumanMessage(content=user_input)]}
 

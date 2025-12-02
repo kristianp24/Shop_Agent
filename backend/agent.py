@@ -16,6 +16,8 @@ from bill_pdf_creator import BillPdfCreator
 from datetime import datetime
 from whatsapp_sender import WhatsappSender
 import base64
+from langgraph.runtime import get_runtime
+from runtime_context import RuntimeContex
 from tools import query_table, query_all_names, update_quantity, delete_record, insert_record, get_total_stock_value, get_general_information, get_most_valuable_product, get_less_products, get_top_products
 check_env_variables()
 class ShopAgent:
@@ -94,6 +96,8 @@ class ShopAgent:
         items = bill_data.get("items", [])
         total_amount = bill_data.get("total_amount", 0.0)
         phone_number = bill_data.get("recipient_contact", None)
+
+
         
         print("Processing bill with tool call:", bill_data)
         pdf_creator = BillPdfCreator(name, date, items, total_amount)
@@ -107,12 +111,62 @@ class ShopAgent:
                     name="bill_processing",
                     artifact={
                         "pdf_base64": encoded_pdf,
-                        "phone_number": phone_number
+                        "phone_number": phone_number,
+                        "bill_data": bill_data
                     }
                 )
             ]
         }
     
+    def bills_database_updater(self, state: AgentState):
+        last_message = state['messages'][-1]
+        values = last_message.artifact
+        bill_data = values.get("bill_data", {})
+
+        if bill_data:
+            data_for_costumers = {
+                "name": bill_data.get("customer_name"),
+                "date_acquisiton": bill_data.get("date"),
+            }
+            try:
+                runtime_config = get_runtime(RuntimeContex)
+                supabase_client = runtime_config.context.db
+                customer_response = supabase_client.table("costumer").insert(data_for_costumers).execute()
+               
+                new_customer_id = customer_response.data[0]['id']
+                
+                items = bill_data.get("items", [])
+                for item in items:
+                    product_name = item.get("product_name")
+                    quantity = item.get("quantity")
+                    query = supabase_client.table("products").select("id").ilike('product_name', product_name).execute()
+                    if query.data and len(query.data) > 0:
+                        product_id = query.data[0]['id']
+                        bill_record = {
+                            "costumer_id": new_customer_id,
+                            "product_id": product_id,
+                            "quantity": int(quantity),
+                            "unit_price": item.get("unit_price"),
+                            "total_value": item.get("total_price"),
+                        }
+                        bill_response = supabase_client.table("orders").insert(bill_record).execute()
+                        
+                    else:
+                        return f"Product {product_name} not found in database."
+                
+
+            except Exception as e:
+                return f"An error occured {e}"
+        return {"messages": [
+                ToolMessage(
+                    tool_call_id=last_message.tool_call_id,
+                    content="Bill data inserted into database successfully.",
+                    name="bills_database_updater"
+                )]}
+
+
+
+
     def whatsapp_sender_node(self, state: AgentState):
         last_message = state['messages'][-1]
         value = last_message.artifact
@@ -138,9 +192,6 @@ class ShopAgent:
             ]
         }
 
-        
-
-
 
     def create_graph(self):
         workflow = StateGraph(AgentState)
@@ -150,12 +201,15 @@ class ShopAgent:
         workflow.add_node("tools", ToolNode(self.tools))
         workflow.add_node("bill_processing", self.bill_processing_node)
         workflow.add_node("whatsapp_sender", self.whatsapp_sender_node)
+        workflow.add_node("bill_database_updater", self.bills_database_updater)
 
         workflow.set_entry_point("intent classifier")
 
         workflow.add_edge("selection_node", "intent classifier")
         workflow.add_edge("tools", "intent classifier")
         workflow.add_edge("bill_processing", "whatsapp_sender")
+        workflow.add_edge("bill_processing", "bill_database_updater")
+        workflow.add_edge("bill_database_updater", "__end__")
         workflow.add_edge("whatsapp_sender", "__end__")
         
 
