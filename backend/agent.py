@@ -18,11 +18,13 @@ from whatsapp_sender import WhatsappSender
 import base64
 from langgraph.runtime import get_runtime
 from runtime_context import RuntimeContex
+from bill_tools import get_bills_for_client
+
 from tools import query_table, query_all_names, update_quantity, delete_record, insert_record, get_total_stock_value, get_general_information, get_most_valuable_product, get_less_products, get_top_products
 check_env_variables()
 class ShopAgent:
     def __init__(self):
-        self.tools = [query_table, query_all_names, update_quantity, insert_record, delete_record, get_total_stock_value, get_general_information, get_less_products, get_top_products, Bill]
+        self.tools = [query_table, query_all_names, update_quantity, insert_record, delete_record, get_total_stock_value, get_general_information, get_less_products, get_top_products, Bill, get_bills_for_client]
         self._llm = ChatGoogleGenerativeAI(model = "gemini-2.5-flash").bind_tools(self.tools)
         self.client = self.create_supabase_client()
        
@@ -34,7 +36,7 @@ class ShopAgent:
         client: Client = create_client(url, key)
         return client
     
-    def call_model(self, state: AgentState) -> Command[Literal["selection_node", "tools", "bill_processing", "__end__"]]:
+    def call_model(self, state: AgentState) -> Command[Literal["selection_node", "tools", "bill_processing", "bill_inventory_node", "__end__"]]:
         messages = state["messages"]
         system_message = SystemMessage(SYSTEM_PROMPT)
         
@@ -47,6 +49,8 @@ class ShopAgent:
             goto = "selection_node"
         elif response.tool_calls[0]['name'] == "Bill":
             goto = "bill_processing"
+        elif response.tool_calls[0]['name'] == "get_bills_for_client":
+            goto = "bill_inventory_node"
         else:
             goto = "tools"
         
@@ -164,8 +168,25 @@ class ShopAgent:
                     name="bills_database_updater"
                 )]}
 
+    def bill_inventory_node(self, state: AgentState):
+        last_message = state['messages'][-1]
+        tool_call = last_message.tool_calls[0]
 
+        data = get_bills_for_client.invoke(tool_call["args"]["client_name"])
+        
+        return {
+            "messages": [
+                ToolMessage( 
+                    tool_call_id=tool_call["id"],
+                    content=f"Print the following bills: {data}",
+                    name="bill_inventory_node"
+                )
+            ]
+        }
 
+        
+
+  
 
     def whatsapp_sender_node(self, state: AgentState):
         last_message = state['messages'][-1]
@@ -202,6 +223,7 @@ class ShopAgent:
         workflow.add_node("bill_processing", self.bill_processing_node)
         workflow.add_node("whatsapp_sender", self.whatsapp_sender_node)
         workflow.add_node("bill_database_updater", self.bills_database_updater)
+        workflow.add_node("bill_inventory_node", self.bill_inventory_node)
 
         workflow.set_entry_point("intent classifier")
 
@@ -211,7 +233,7 @@ class ShopAgent:
         workflow.add_edge("bill_processing", "bill_database_updater")
         workflow.add_edge("bill_database_updater", "__end__")
         workflow.add_edge("whatsapp_sender", "__end__")
-        
+        workflow.add_edge("bill_inventory_node", "intent classifier")
 
         return workflow.compile(checkpointer=InMemorySaver())
  
